@@ -22,6 +22,7 @@ let magMin = 5;
 // Botón de sonido, oscilador, envolvente y estado del audio
 let botonSonido, osc, env;
 let sonidoActivo = false;
+let sliderMag;
 
 // CARGA DE DATOS (se ejecuta antes que setup)
 function preload() {
@@ -54,8 +55,10 @@ function setup() {
   botonSonido = createButton('Activar sonido');
   botonSonido.mousePressed(alternarSonido);
 
+  sliderMag = createSlider(2.5, 8, 5, 0.1);
+
   // Oscilador de onda seno controlado por una envolvente
-  osc = new p5.Oscillator('sine');
+  osc = new p5.Oscillator('triangle');
   env = new p5.Envelope();
   env.setADSR(0.01, 0.15, 0.1, 0.4);
   env.setRange(0.4, 0);
@@ -66,6 +69,8 @@ function setup() {
 function draw() {
   background(10, 12, 30);
   dibujarCuadricula();
+
+  magMin = sliderMag.value();
 
   // Reloj simulado: el mes completo dura 60 segundos reales
   let ahora = t0 + (millis() * duracion / 60000) % duracion;
@@ -121,6 +126,28 @@ function draw() {
   textSize(14);
   textAlign(LEFT, TOP);
   text(new Date(ahora).toLocaleDateString('es-CO'), 10, 10);
+
+  // Sismo más cercano al cursor
+  let sismoCercano = null;
+  let distMin = 20;
+  for (let i = 0; i < indice; i++) {
+    let s = sismos[i];
+    if (s.mag < magMin) continue;
+    let p = proyectar(s.lon, s.lat);
+    let d = dist(mouseX, mouseY, p.x, p.y);
+    if (d < distMin) {
+      distMin = d;
+      sismoCercano = s;
+    }
+  }
+
+  if (sismoCercano) {
+    fill(255);
+    noStroke();
+    textSize(12);
+    textAlign(LEFT, BOTTOM);
+    text(`${sismoCercano.lugar} | Mag: ${sismoCercano.mag} | Prof: ${sismoCercano.prof}km`, mouseX + 10, mouseY - 10);
+  }
 }
 
 // FUNCIONES AUXILIARES
